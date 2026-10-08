@@ -502,7 +502,7 @@
             <path d="M50 11 83 22v26c0 20-14 33-33 40-19-7-33-20-33-40V22z" fill="#0c2340" />
             <path d="M43 28h14v15h15v14H57v15H43V57H28V43h15z" fill="url(#g)" />
         </svg>
-        <div class="org">โรงพยาบาลชุมชนเทศบาลเมืองกำแพงเพชร</div>
+        <div class="org">โรงพยาบาล KPPMCH</div>
         <h1>ระบบตรวจสอบวันนัดผู้ป่วย</h1>
         <p class="sub">กรอกเลขบัตรประชาชนเพื่อดูวันนัดครั้งถัดไปของท่าน</p>
         <div class="rule"></div>
@@ -524,7 +524,7 @@
                     <path d="M8 11V7a4 4 0 0 1 8 0v4" />
                 </svg>
                 <span>ข้อมูลของท่านถูกเข้ารหัสและใช้เพื่อแสดงวันนัดเท่านั้น ตามพระราชบัญญัติคุ้มครองข้อมูลส่วนบุคคล พ.ศ.
-                    2562 ระบบไม่จัดเก็บเลขบัตรที่ท่านกรอก เพื่อความเป็นส่วนตัว</span>
+                    2562 ระบบไม่จัดเก็บเลขบัตรที่ท่านกรอก</span>
             </div>
         </section>
         <section id="result" aria-live="polite"></section>
@@ -548,12 +548,8 @@
         $('nid').addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
         $('go').addEventListener('click', submit);
 
-        // ตรวจเลขบัตร (checksum)
-        function validId(id) {
-            if (!/^\d{13}$/.test(id)) return false;
-            let s = 0; for (let i = 0; i < 12; i++) s += +id[i] * (13 - i);
-            return (11 - (s % 11)) % 10 === +id[12];
-        }
+        // ตรวจว่ากรอกครบ 13 หลัก
+        function validId(id) { return /^\d{13}$/.test(id); }
         function showErr(msg, el) { $('err').textContent = msg; if (el) { el.classList.add('err'); el.focus(); } }
 
         // ถ้าเปิดจาก GAS ใช้ google.script.run / ถ้าโฮสต์ข้างนอก (Vercel) ใช้ fetch
@@ -612,17 +608,19 @@
                 box.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); return;
             }
             const a = res.data, t = thaiDate(a.next_appointment), n = daysLeft(t.utc);
-            const cd = n === 0 ? 'วันนี้ !' : n === 1 ? 'พรุ่งนี้' : `อีก ${n} วัน`;
+            const past = !!a.is_past;
+            const cd = past ? `ผ่านมาแล้ว ${Math.abs(n)} วัน` : n === 0 ? 'วันนี้ !' : n === 1 ? 'พรุ่งนี้' : `อีก ${n} วัน`;
             const ico = p => `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1d4e9e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
             box.innerHTML = `
   <article class="ticket">
-    <div class="t-head"><b>บัตรนัดผู้ป่วย</b><span class="badge">นัดครั้งถัดไป</span></div>
+    <div class="t-head"><b>บัตรนัดผู้ป่วย</b><span class="badge">${past ? 'นัดครั้งล่าสุด' : 'นัดครั้งถัดไป'}</span></div>
     <div class="t-body">
       <div class="t-name">${esc(a.first_name)} ${esc(a.last_name)}</div>
-      <div class="t-lbl">ท่านมีนัดวันที่</div>
+      <div class="t-lbl">${past ? 'นัดครั้งล่าสุดของท่านคือวันที่' : 'ท่านมีนัดวันที่'}</div>
       <div class="t-date">${t.text}</div>
       <div class="t-day">${t.day}</div>
-      <span class="count ${n <= 3 ? 'soon' : ''}">${cd}</span>
+      <span class="count ${!past && n <= 3 ? 'soon' : ''}">${cd}</span>
+      ${past ? '<p style="margin-top:10px;color:#a63232;font-size:15px">ยังไม่พบวันนัดครั้งถัดไป กรุณาติดต่อเจ้าหน้าที่</p>' : ''}
     </div>
     <div class="tear"></div>
     <div class="t-info">
