@@ -507,8 +507,8 @@
             <path d="M50 11 83 22v26c0 20-14 33-33 40-19-7-33-20-33-40V22z" fill="#0c2340" />
             <path d="M43 28h14v15h15v14H57v15H43V57H28V43h15z" fill="url(#g)" />
         </svg>
-        <div class="org">โรงพยาบาล KPPMCH</div>
-        <h1>ระบบตรวจสอบวันนัดผู้ป่วย</h1>
+        <div class="org">โรงพยาบาลชุมชนเทศบาลเมืองกำแพงเพชร</div>
+        <h1>ระบบตรวจสอบวันนัดผู้ป่วย ด้วยตนเอง</h1>
         <p class="sub">กรอกเลขบัตรประชาชนเพื่อดูวันนัดครั้งถัดไปของท่าน</p>
         <div class="rule"></div>
     </header>
@@ -529,7 +529,7 @@
                     <path d="M8 11V7a4 4 0 0 1 8 0v4" />
                 </svg>
                 <span>ข้อมูลของท่านถูกเข้ารหัสและใช้เพื่อแสดงวันนัดเท่านั้น ตามพระราชบัญญัติคุ้มครองข้อมูลส่วนบุคคล พ.ศ.
-                    2562 ระบบไม่จัดเก็บเลขบัตรที่ท่านกรอก</span>
+                    2562 ระบบไม่จัดเก็บเลขบัตรที่ท่านกรอก เพื่อความเป็นส่วนตัว</span>
             </div>
         </section>
         <section id="result" aria-live="polite"></section>
@@ -557,8 +557,19 @@
         function validId(id) { return /^\d{13}$/.test(id); }
         function showErr(msg, el) { $('err').textContent = msg; if (el) { el.classList.add('err'); el.focus(); } }
 
+        // อุ่นเซิร์ฟเวอร์ล่วงหน้า ระหว่างที่ผู้ใช้กำลังพิมพ์เลขบัตร เพื่อลดเวลารอตอนกดตรวจสอบ
+        let lastWarm = 0;
+        function warmUp() {
+            if (window.google && google.script && google.script.run) return;
+            if (Date.now() - lastWarm < 240000) return;
+            lastWarm = Date.now();
+            fetch(API_URL + '?ping=1', { mode: 'no-cors' }).catch(() => { });
+        }
+        warmUp();
+        $('nid').addEventListener('input', warmUp);
+
         // ถ้าเปิดจาก GAS ใช้ google.script.run / ถ้าโฮสต์ข้างนอก (Vercel) ใช้ fetch
-        function lookup(nid) {
+        function lookupOnce(nid) {
             if (window.google && google.script && google.script.run) {
                 return new Promise((ok, fail) =>
                     google.script.run.withSuccessHandler(ok).withFailureHandler(fail).searchAppointment(nid));
@@ -570,28 +581,44 @@
             }).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
         }
 
+        // ลองซ้ำ 1 ครั้งถ้าเครือข่ายหรือเซิร์ฟเวอร์สะดุด (กันขึ้น "ไม่พบข้อมูล" ทั้งที่จริงมีข้อมูล)
+        async function lookup(nid) {
+            for (let i = 0; i < 2; i++) {
+                try {
+                    const res = await lookupOnce(nid);
+                    if (res && res.error) throw new Error('server error');
+                    return res;
+                } catch (e) {
+                    if (i === 1) throw e;
+                    await new Promise(r => setTimeout(r, 1000));
+                }
+            }
+        }
+
         function submit() {
             const nid = $('nid').value.replace(/\D/g, '');
             if (!validId(nid)) return showErr('เลขบัตรประชาชนไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง', $('nid'));
             setLoading(true); $('result').style.display = 'none'; clearTimeout(hideTimer);
 
             let finished = false;
+            const slow = setTimeout(() => { if (!finished) setLoading(true, 'กำลังตรวจสอบ... กรุณารอสักครู่'); }, 6000);
+            const done = () => { finished = true; clearTimeout(guard); clearTimeout(slow); setLoading(false); };
             const guard = setTimeout(() => {
-                if (finished) return; finished = true; setLoading(false);
+                if (finished) return; done();
                 showErr('ระบบตอบสนองช้า กรุณาลองกดตรวจสอบอีกครั้ง');
-            }, 30000);
+            }, 45000);
 
             lookup(nid)
-                .then(res => { if (finished) return; finished = true; clearTimeout(guard); setLoading(false); render(res); })
+                .then(res => { if (finished) return; done(); render(res); })
                 .catch(err => {
-                    console.error(err); if (finished) return; finished = true; clearTimeout(guard); setLoading(false);
+                    console.error(err); if (finished) return; done();
                     showErr('ระบบขัดข้อง กรุณาลองใหม่อีกครั้งในภายหลัง');
                 });
         }
 
-        function setLoading(on) {
+        function setLoading(on, msg) {
             const b = $('go'); b.disabled = on;
-            b.innerHTML = on ? '<span class="spin"></span>กำลังตรวจสอบ...' : 'ตรวจสอบวันนัด';
+            b.innerHTML = on ? '<span class="spin"></span>' + (msg || 'กำลังตรวจสอบ...') : 'ตรวจสอบวันนัด';
         }
 
         function thaiDate(iso) {
