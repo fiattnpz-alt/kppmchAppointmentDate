@@ -337,6 +337,11 @@
             color: #7a5600
         }
 
+        .count.late {
+            background: #fdeaea;
+            color: #a63232
+        }
+
         .tear {
             position: relative;
             height: 0;
@@ -609,18 +614,18 @@
             }
             const a = res.data, t = thaiDate(a.next_appointment), n = daysLeft(t.utc);
             const past = !!a.is_past;
-            const cd = past ? `ผ่านมาแล้ว ${Math.abs(n)} วัน` : n === 0 ? 'วันนี้ !' : n === 1 ? 'พรุ่งนี้' : `อีก ${n} วัน`;
+            const cd = past ? 'เลยกำหนดวันนัดมาแล้ว' : n === 0 ? 'วันนี้ !' : n === 1 ? 'พรุ่งนี้' : `อีก ${n} วัน`;
             const ico = p => `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1d4e9e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
             box.innerHTML = `
   <article class="ticket">
-    <div class="t-head"><b>บัตรนัดผู้ป่วย</b><span class="badge">${past ? 'นัดครั้งล่าสุด' : 'นัดครั้งถัดไป'}</span></div>
+    <div class="t-head"><b>บัตรนัดผู้ป่วย</b><span class="badge">${past ? 'เลยกำหนดนัด' : 'นัดครั้งถัดไป'}</span></div>
     <div class="t-body">
       <div class="t-name">${esc(a.first_name)} ${esc(a.last_name)}</div>
-      <div class="t-lbl">${past ? 'นัดครั้งล่าสุดของท่านคือวันที่' : 'ท่านมีนัดวันที่'}</div>
+      <div class="t-lbl">ท่านมีนัดวันที่</div>
       <div class="t-date">${t.text}</div>
       <div class="t-day">${t.day}</div>
-      <span class="count ${!past && n <= 3 ? 'soon' : ''}">${cd}</span>
-      ${past ? '<p style="margin-top:10px;color:#a63232;font-size:15px">ยังไม่พบวันนัดครั้งถัดไป กรุณาติดต่อเจ้าหน้าที่</p>' : ''}
+      <span class="count ${past ? 'late' : n <= 3 ? 'soon' : ''}">${cd}</span>
+      ${past ? '<p style="margin-top:10px;color:#a63232;font-size:15px">ไม่พบวันนัดครั้งถัดไป กรุณาติดต่อเจ้าหน้าที่</p>' : ''}
     </div>
     <div class="tear"></div>
     <div class="t-info">
