@@ -636,7 +636,7 @@
             const box = $('result'); box.style.display = 'block';
             if (!res || !res.found) {
                 box.innerHTML = `<div class="notfound"><h2>ไม่พบข้อมูลวันนัด</h2>
-      <p>ไม่พบวันนัดที่ตรงกับข้อมูลที่กรอก<br>กรุณาตรวจสอบข้อมูลอีกครั้ง หรือ<b> ติดต่อเจ้าหน้าที่</b></p></div>`;
+      <p>ไม่พบวันนัด รวมถึง วันนัดเลยกำหนดแล้ว<br>กรุณาตรวจสอบข้อมูลอีกครั้ง หรือ<b> ติดต่อเจ้าหน้าที่</b></p></div>`;
                 box.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); return;
             }
             const a = res.data, t = thaiDate(a.next_appointment), n = daysLeft(t.utc);
