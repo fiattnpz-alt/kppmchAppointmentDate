@@ -22,9 +22,7 @@
             --ink: #1b2433;
             --muted: #5d6b82;
             --line: #d5deec;
-            --ok: #17744a;
-            --bad: #a63232;
-            --paper: #fff;
+            --bad: #a63232
         }
 
         * {
@@ -46,7 +44,6 @@
             font-size: 17px
         }
 
-        /* ── Header ── */
         .top {
             height: 6px;
             background: linear-gradient(90deg, var(--gold), var(--gold-l), var(--gold))
@@ -57,9 +54,7 @@
             color: #fff;
             text-align: center;
             padding: 40px 20px 120px;
-            background:
-                radial-gradient(circle at 15% 20%, rgba(255, 255, 255, .08) 0 2px, transparent 3px) 0 0/34px 34px,
-                linear-gradient(160deg, var(--navy) 0%, #123a73 60%, var(--blue) 100%)
+            background: radial-gradient(circle at 15% 20%, rgba(255, 255, 255, .08) 0 2px, transparent 3px) 0 0/34px 34px, linear-gradient(160deg, var(--navy) 0%, #123a73 60%, var(--blue) 100%)
         }
 
         .hero::after {
@@ -111,7 +106,6 @@
             background: linear-gradient(90deg, transparent, var(--gold-l), transparent)
         }
 
-        /* ── Main ── */
         main {
             max-width: 620px;
             margin: -84px auto 0;
@@ -121,33 +115,25 @@
         }
 
         .card {
-            background: var(--paper);
+            background: #fff;
             border-radius: 14px;
             padding: 28px 26px;
             box-shadow: 0 18px 50px rgba(12, 35, 64, .18);
             border-top: 4px solid var(--gold)
         }
 
-        label,
-        .lbl {
+        label {
             display: block;
             font-weight: 600;
             color: var(--navy);
             margin-bottom: 6px
         }
 
-        .hint {
-            font-size: 14px;
-            color: var(--muted);
-            font-weight: 400
-        }
-
         .field {
             margin-bottom: 20px
         }
 
-        input[type=text],
-        select {
+        input[type=text] {
             width: 100%;
             font: inherit;
             padding: 13px 15px;
@@ -167,15 +153,13 @@
         }
 
         input:focus,
-        select:focus,
         button:focus-visible {
             outline: none;
             border-color: var(--blue);
             box-shadow: 0 0 0 4px rgba(29, 78, 158, .18)
         }
 
-        input.err,
-        select.err {
+        input.err {
             border-color: var(--bad);
             background: #fff7f7
         }
@@ -256,7 +240,6 @@
             margin-top: 3px
         }
 
-        /* ── ผลลัพธ์ = บัตรนัด ── */
         #result {
             margin-top: 26px;
             display: none
@@ -508,7 +491,6 @@
 <body>
     <div class="top"></div>
     <header class="hero">
-        <!-- ตราสัญลักษณ์ชั่วคราว: เปลี่ยนเป็นโลโก้หน่วยงานจริงด้วย <img src="data:..."> หรือลิงก์รูป -->
         <svg class="emblem" viewBox="0 0 100 100" role="img" aria-label="ตราหน่วยงาน">
             <defs>
                 <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
@@ -520,7 +502,7 @@
             <path d="M50 11 83 22v26c0 20-14 33-33 40-19-7-33-20-33-40V22z" fill="#0c2340" />
             <path d="M43 28h14v15h15v14H57v15H43V57H28V43h15z" fill="url(#g)" />
         </svg>
-        <div class="org">โรงพยาบาล KPPMCH</div>
+        <div class="org">โรงพยาบาลชุมชนเทศบาลเมืองกำแพงเพชร</div>
         <h1>ระบบตรวจสอบวันนัดผู้ป่วย</h1>
         <p class="sub">กรอกเลขบัตรประชาชนเพื่อดูวันนัดครั้งถัดไปของท่าน</p>
         <div class="rule"></div>
@@ -542,10 +524,9 @@
                     <path d="M8 11V7a4 4 0 0 1 8 0v4" />
                 </svg>
                 <span>ข้อมูลของท่านถูกเข้ารหัสและใช้เพื่อแสดงวันนัดเท่านั้น ตามพระราชบัญญัติคุ้มครองข้อมูลส่วนบุคคล พ.ศ.
-                    2562 ระบบไม่จัดเก็บเลขบัตรที่ท่านกรอก</span>
+                    2562 ระบบไม่จัดเก็บเลขบัตรที่ท่านกรอก เพื่อความเป็นส่วนตัว</span>
             </div>
         </section>
-
         <section id="result" aria-live="polite"></section>
     </main>
 
@@ -558,23 +539,35 @@
         const DAYS = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
         let hideTimer;
 
-        // ── จัดรูปแบบเลขบัตร x-xxxx-xxxxx-xx-x ──
+        // จัดรูปแบบเลขบัตร x-xxxx-xxxxx-xx-x
         $('nid').addEventListener('input', e => {
             const d = e.target.value.replace(/\D/g, '').slice(0, 13);
-            const g = [d.slice(0, 1), d.slice(1, 5), d.slice(5, 10), d.slice(10, 12), d.slice(12, 13)].filter(Boolean);
-            e.target.value = g.join('-');
+            e.target.value = [d.slice(0, 1), d.slice(1, 5), d.slice(5, 10), d.slice(10, 12), d.slice(12, 13)].filter(Boolean).join('-');
             e.target.classList.remove('err'); $('err').textContent = '';
         });
         $('nid').addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
         $('go').addEventListener('click', submit);
 
-        // ── ตรวจเลขบัตร (checksum) ──
+        // ตรวจเลขบัตร (checksum)
         function validId(id) {
             if (!/^\d{13}$/.test(id)) return false;
             let s = 0; for (let i = 0; i < 12; i++) s += +id[i] * (13 - i);
             return (11 - (s % 11)) % 10 === +id[12];
         }
-        function showErr(msg, el) { $('err').textContent = msg; if (el) el.classList.add('err'); if (el) el.focus(); }
+        function showErr(msg, el) { $('err').textContent = msg; if (el) { el.classList.add('err'); el.focus(); } }
+
+        // ถ้าเปิดจาก GAS ใช้ google.script.run / ถ้าโฮสต์ข้างนอก (Vercel) ใช้ fetch
+        function lookup(nid) {
+            if (window.google && google.script && google.script.run) {
+                return new Promise((ok, fail) =>
+                    google.script.run.withSuccessHandler(ok).withFailureHandler(fail).searchAppointment(nid));
+            }
+            return fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ nationalId: nid })
+            }).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
+        }
 
         function submit() {
             const nid = $('nid').value.replace(/\D/g, '');
@@ -587,10 +580,12 @@
                 showErr('ระบบตอบสนองช้า กรุณาลองกดตรวจสอบอีกครั้ง');
             }, 30000);
 
-            google.script.run
-                .withSuccessHandler(res => { if (finished) return; finished = true; clearTimeout(guard); setLoading(false); render(res); })
-                .withFailureHandler(() => { if (finished) return; finished = true; clearTimeout(guard); setLoading(false); showErr('ระบบขัดข้อง กรุณาลองใหม่อีกครั้งในภายหลัง'); })
-                .searchAppointment(nid);
+            lookup(nid)
+                .then(res => { if (finished) return; finished = true; clearTimeout(guard); setLoading(false); render(res); })
+                .catch(err => {
+                    console.error(err); if (finished) return; finished = true; clearTimeout(guard); setLoading(false);
+                    showErr('ระบบขัดข้อง กรุณาลองใหม่อีกครั้งในภายหลัง');
+                });
         }
 
         function setLoading(on) {
@@ -598,11 +593,10 @@
             b.innerHTML = on ? '<span class="spin"></span>กำลังตรวจสอบ...' : 'ตรวจสอบวันนัด';
         }
 
-        // ── แปลงวันที่ ──
         function thaiDate(iso) {
             const [y, m, d] = iso.split('-').map(Number);
             const dt = new Date(Date.UTC(y, m - 1, d));
-            return { text: `${d} ${MONTHS[m - 1]} ${y + 543}`, day: 'วัน' + DAYS[dt.getUTCDay()], utc: dt, y, m, d };
+            return { text: `${d} ${MONTHS[m - 1]} ${y + 543}`, day: 'วัน' + DAYS[dt.getUTCDay()], utc: dt };
         }
         function daysLeft(utc) {
             const n = new Date(); const today = Date.UTC(n.getFullYear(), n.getMonth(), n.getDate());
@@ -610,7 +604,6 @@
         }
         const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-        // ── แสดงผล ──
         function render(res) {
             const box = $('result'); box.style.display = 'block';
             if (!res || !res.found) {
