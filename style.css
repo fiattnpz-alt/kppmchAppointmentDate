@@ -461,6 +461,66 @@ footer b {
     font-size: 15px;
 }
 
+/* ปุ่มพิมพ์: ซ่อนบนมือถือ/แท็บเล็ต (จอสัมผัส) เพราะสั่งพิมพ์จากมือถือมักใช้ไม่ได้ ให้ใช้ "บันทึกเป็นรูป" แทน */
+@media (hover: none) and (pointer: coarse) {
+    .btn-print {
+        display: none;
+    }
+}
+
+/* หน้าต่างแสดงรูปบัตรนัด (ตอนกด "บันทึกเป็นรูป") */
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(12, 35, 64, .78);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 100;
+}
+
+.modal.open {
+    display: flex;
+}
+
+.modal-box {
+    background: #fff;
+    border-radius: 14px;
+    padding: 16px;
+    width: 100%;
+    max-width: 520px;
+    max-height: 94vh;
+    overflow: auto;
+    text-align: center;
+}
+
+.modal-tip {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 10px;
+}
+
+.modal-box img {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 0 auto 14px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    -webkit-touch-callout: default;
+    user-select: auto;
+}
+
+.modal-act {
+    display: flex;
+    gap: 10px;
+}
+
+.modal-act .btn {
+    flex: 1;
+}
+
 /* ส่วนหัว/ท้ายที่แสดงเฉพาะตอนพิมพ์ (หน้าจอปกติซ่อนไว้) */
 .print-head,
 .print-foot {
@@ -489,6 +549,7 @@ footer b {
         print-color-adjust: exact;
     }
 
+    .modal,
     .hero,
     .top,
     .card,
