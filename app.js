@@ -187,18 +187,42 @@ function roundRect(ctx, x, y, w, h, r) {
     ctx.closePath();
 }
 
-// ตัดบรรทัดข้อความ (ภาษาไทยไม่มีเว้นวรรค จึงใช้ Intl.Segmenter ตัดตามคำ)
+// แยกข้อความเป็น "กลุ่มตัวอักษร" ที่ห้ามตัดกลาง (พยัญชนะ + สระบน/ล่าง + วรรณยุกต์ + สระตาม, สระหน้า เ แ โ ใ ไ + พยัญชนะ)
+// ใช้ตอนตัดบรรทัด กันตัวอักษรไทยแตก เช่น สระ/วรรณยุกต์ไปขึ้นต้นบรรทัดใหม่ (เบราว์เซอร์มือถือบางตัวไม่มี Intl.Segmenter)
+function thaiClusters(str) {
+    const out = [];
+    for (const ch of str) {
+        const c = ch.codePointAt(0);
+        const attachPrev = (c >= 0x0E30 && c <= 0x0E3A) || (c >= 0x0E45 && c <= 0x0E4E);  // ะ ั า ำ ิ ี ึ ื ุ ู ฺ ๅ ๆ ็ ่ ้ ๊ ๋ ์ ํ ๎
+        if (attachPrev && out.length) out[out.length - 1] += ch; else out.push(ch);
+    }
+    const merged = [];
+    for (let i = 0; i < out.length; i++) {
+        const c = out[i].codePointAt(0);
+        if (c >= 0x0E40 && c <= 0x0E44 && i + 1 < out.length) { merged.push(out[i] + out[i + 1]); i++; }  // สระหน้าอยู่กับตัวถัดไป
+        else merged.push(out[i]);
+    }
+    return merged;
+}
+
+// ตัดบรรทัดข้อความ (ภาษาไทยไม่มีเว้นวรรค จึงตัดตามคำด้วย Intl.Segmenter ถ้าไม่มีก็ตัดตามกลุ่มตัวอักษรข้างบน)
 function wrapText(ctx, text, maxW) {
     const out = [];
     String(text == null ? '' : text).split('\n').forEach(par => {
         const segs = (window.Intl && Intl.Segmenter)
             ? Array.from(new Intl.Segmenter('th', { granularity: 'word' }).segment(par), x => x.segment)
-            : Array.from(par);
+            : thaiClusters(par);
         let line = '';
-        segs.forEach(w => {
-            if (line && ctx.measureText(line + w).width > maxW) { out.push(line.trim()); line = w.trimStart(); }
-            else line += w;
-        });
+        const add = w => {
+            if (line && ctx.measureText(line + w).width > maxW) { out.push(line.trim()); line = ''; w = w.trimStart(); }
+            if (!line && ctx.measureText(w).width > maxW) {            // คำเดียวยาวเกินบรรทัด → ตัดตามกลุ่มตัวอักษร
+                thaiClusters(w).forEach(g => {
+                    if (line && ctx.measureText(line + g).width > maxW) { out.push(line); line = ''; }
+                    line += g;
+                });
+            } else line += w;
+        };
+        segs.forEach(add);
         if (line.trim() || !out.length) out.push(line.trim());
     });
     return out;
@@ -210,6 +234,8 @@ function paintTicket(ctx, H) {
     const navy = '#0c2340', blue = '#1d4e9e', gold = '#b8902f', muted = '#5d6b82', line = '#d5deec', sky = '#e8eef8';
     const textW = CW - IP * 2;
     ctx.textBaseline = 'alphabetic';
+    if ('fontKerning' in ctx) ctx.fontKerning = 'normal';
+    if ('textRendering' in ctx) ctx.textRendering = 'optimizeLegibility';
 
     // พื้นหลังรูป + การ์ด
     ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
