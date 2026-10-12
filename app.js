@@ -187,6 +187,12 @@ function roundRect(ctx, x, y, w, h, r) {
     ctx.closePath();
 }
 
+// วาดข้อความกึ่งกลางที่ x = cx โดยไม่พึ่ง textAlign='center' (บางเบราว์เซอร์มือถือไม่ทำงาน)
+function textC(ctx, s, cx, y) {
+    ctx.textAlign = 'left';
+    ctx.fillText(s, cx - ctx.measureText(s).width / 2, y);
+}
+
 // แยกข้อความเป็น "กลุ่มตัวอักษร" ที่ห้ามตัดกลาง (พยัญชนะ + สระบน/ล่าง + วรรณยุกต์ + สระตาม, สระหน้า เ แ โ ใ ไ + พยัญชนะ)
 // ใช้ตอนตัดบรรทัด กันตัวอักษรไทยแตก เช่น สระ/วรรณยุกต์ไปขึ้นต้นบรรทัดใหม่ (เบราว์เซอร์มือถือบางตัวไม่มี Intl.Segmenter)
 function thaiClusters(str) {
@@ -234,8 +240,6 @@ function paintTicket(ctx, H) {
     const navy = '#0c2340', blue = '#1d4e9e', gold = '#b8902f', muted = '#5d6b82', line = '#d5deec', sky = '#e8eef8';
     const textW = CW - IP * 2;
     ctx.textBaseline = 'alphabetic';
-    if ('fontKerning' in ctx) ctx.fontKerning = 'normal';
-    if ('textRendering' in ctx) ctx.textRendering = 'optimizeLegibility';
 
     // พื้นหลังรูป + การ์ด
     ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
@@ -247,8 +251,8 @@ function paintTicket(ctx, H) {
 
     // โลโก้ + ชื่อหน่วยงาน
     if (d.logo) { ctx.drawImage(d.logo, cx - 30, y, 60, 60); y += 60 + 10; }
-    ctx.fillStyle = navy; ctx.textAlign = 'center'; ctx.font = '700 17px ' + SERIF;
-    wrapText(ctx, d.orgName, textW).forEach(l => { ctx.fillText(l, cx, y + 17); y += 25; });
+    ctx.fillStyle = navy; ctx.font = '700 17px ' + SERIF;
+    wrapText(ctx, d.orgName, textW).forEach(l => { textC(ctx, l, cx, y + 17); y += 25; });
     y += 12;
 
     // แถบหัวบัตร
@@ -262,8 +266,8 @@ function paintTicket(ctx, H) {
     ctx.font = '600 13px ' + SANS;
     const bw = ctx.measureText(badge).width + 26;
     roundRect(ctx, P + CW - IP - bw, y + 11, bw, 26, 13); ctx.fillStyle = '#e6c872'; ctx.fill();
-    ctx.fillStyle = navy; ctx.textAlign = 'center';
-    ctx.fillText(badge, P + CW - IP - bw / 2, y + 29);
+    ctx.fillStyle = navy;
+    textC(ctx, badge, P + CW - IP - bw / 2, y + 29);
     y += bandH + 26;
 
     // ชื่อ / วันนัด
@@ -271,26 +275,26 @@ function paintTicket(ctx, H) {
     let nfs = 20;
     ctx.font = '600 ' + nfs + 'px ' + SANS;
     while (ctx.measureText(fullName).width > textW && nfs > 12) { nfs -= 1; ctx.font = '600 ' + nfs + 'px ' + SANS; }
-    ctx.fillStyle = navy; ctx.fillText(fullName, cx, y + 20); y += 34;
+    ctx.fillStyle = navy; textC(ctx, fullName, cx, y + 20); y += 34;
     ctx.fillStyle = muted; ctx.font = '400 14px ' + SANS;
-    ctx.fillText('ท่านมีนัดวันที่', cx, y + 14); y += 28;
+    textC(ctx, 'ท่านมีนัดวันที่', cx, y + 14); y += 28;
 
     let fs = 34;
     ctx.font = '700 ' + fs + 'px ' + SERIF;
     while (ctx.measureText(d.t.text).width > textW && fs > 20) { fs -= 1; ctx.font = '700 ' + fs + 'px ' + SERIF; }
-    ctx.fillStyle = blue; ctx.fillText(d.t.text, cx, y + fs); y += fs + 12;
+    ctx.fillStyle = blue; textC(ctx, d.t.text, cx, y + fs); y += fs + 12;
     ctx.fillStyle = gold; ctx.font = '600 19px ' + SANS;
-    ctx.fillText(d.t.day, cx, y + 19); y += 34;
+    textC(ctx, d.t.day, cx, y + 19); y += 34;
 
     // ป้ายจำนวนวัน
     const pill = d.past ? { bg: '#fdeaea', fg: '#a63232' } : d.n <= 3 ? { bg: '#fff3d6', fg: '#7a5600' } : { bg: sky, fg: navy };
     ctx.font = '600 15px ' + SANS;
     const pw = ctx.measureText(d.cd).width + 38;
     roundRect(ctx, cx - pw / 2, y, pw, 32, 16); ctx.fillStyle = pill.bg; ctx.fill();
-    ctx.fillStyle = pill.fg; ctx.fillText(d.cd, cx, y + 21); y += 32;
+    ctx.fillStyle = pill.fg; textC(ctx, d.cd, cx, y + 21); y += 32;
     if (d.past) {
         ctx.fillStyle = '#a63232'; ctx.font = '400 14px ' + SANS;
-        ctx.fillText('ไม่พบวันนัดครั้งถัดไป กรุณาติดต่อเจ้าหน้าที่', cx, y + 26); y += 32;
+        textC(ctx, 'ไม่พบวันนัดครั้งถัดไป กรุณาติดต่อเจ้าหน้าที่', cx, y + 26); y += 32;
     }
     y += 28;
 
@@ -322,8 +326,8 @@ function paintTicket(ctx, H) {
     y += 2;
     ctx.strokeStyle = line; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(P, y); ctx.lineTo(P + CW, y); ctx.stroke();
-    ctx.fillStyle = muted; ctx.textAlign = 'center'; ctx.font = '400 12.5px ' + SANS;
-    ctx.fillText('พิมพ์เมื่อ ' + d.printed, cx, y + 24); y += 38;
+    ctx.fillStyle = muted; ctx.font = '400 12.5px ' + SANS;
+    textC(ctx, 'พิมพ์เมื่อ ' + d.printed, cx, y + 24); y += 38;
 
     ctx.restore();
     // เส้นขอบการ์ด
